@@ -15,7 +15,7 @@
  */
 
 use std::convert::Into;
-use std::fs::{File, read_dir};
+use std::fs::{read_dir, File};
 use std::io::prelude::*;
 use std::path::PathBuf;
 
@@ -72,7 +72,7 @@ pub fn upload_to_storage(
 ) -> Result<H256, Error> {
     let hash = match storage_type {
         Storage::SWARM => {
-            let hash = upload_code_to_swarm(storage_url, path)?;
+            let hash = upload_file_to_swarm(storage_url, path)?;
             hash.parse().map_err(|e| {
                 err_msg(format!(
                     "Swarm upload error: invalid hex returned {} {}",
@@ -80,7 +80,7 @@ pub fn upload_to_storage(
                 ))
             })?
         }
-        Storage::IPFS => upload_code_to_ipfs(storage_url, path)?,
+        Storage::IPFS => upload_file_to_ipfs(storage_url, path)?,
         Storage::UNKNOWN(u) => Err(err_msg(format!("Unknown type of storage: {}", u)))?,
     };
 
@@ -89,7 +89,10 @@ pub fn upload_to_storage(
 
 /// Uploads file of code to the Swarm
 /// TODO add directories support
-fn upload_code_to_swarm(url: &str, path: PathBuf) -> Result<String, Error> {
+fn upload_file_to_swarm(url: &str, path: PathBuf) -> Result<String, Error> {
+    if path.as_path().is_dir() {
+        Err(err_msg("Uploading directory to Swarm is not supported."))?;
+    };
     let mut file = File::open(path)?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
@@ -110,7 +113,7 @@ fn upload_code_to_swarm(url: &str, path: PathBuf) -> Result<String, Error> {
 }
 
 /// Uploads files to IPFS
-fn upload_code_to_ipfs(url: &str, path: PathBuf) -> Result<H256, Error> {
+fn upload_file_to_ipfs(url: &str, path: PathBuf) -> Result<H256, Error> {
     let mut url = utils::parse_url(url)?;
     url.set_path("/api/v0/add");
 
@@ -137,12 +140,14 @@ fn upload_code_to_ipfs(url: &str, path: PathBuf) -> Result<H256, Error> {
         .and_then(|mut r| r.text())
         .context("Error uploading code to IPFS")?;
 
-    let responses: Result<Vec<IpfsResponse>, Error> = response.as_str()
+    let responses: Result<Vec<IpfsResponse>, Error> = response
+        .as_str()
         .split_whitespace()
         .map(|str| {
             let resp: IpfsResponse = serde_json::from_str(str)?;
             Ok(resp)
-        }).collect();
+        })
+        .collect();
 
     let responses: Vec<IpfsResponse> = responses?;
 
@@ -152,11 +157,14 @@ fn upload_code_to_ipfs(url: &str, path: PathBuf) -> Result<H256, Error> {
         responses[0].hash.as_str()
     } else {
         // directory hash is in response with empty name
-        let dir_response: Option<&str> = responses.iter().find(|r| r.name.is_empty()).map(|r| r.hash.as_str());
+        let dir_response: Option<&str> = responses
+            .iter()
+            .find(|r| r.name.is_empty())
+            .map(|r| r.hash.as_str());
         dir_response.ok_or_else(|| err_msg("Multiple files uploaded, but no hash of directory."))?
     };
 
-    utils::print_info_msg("IPFS file address", base58_str.to_owned());
+    utils::print_info_msg("Code was uploaded to IPFS: {}", base58_str.to_owned());
 
     let bytes = base58_str
         .from_base58()
