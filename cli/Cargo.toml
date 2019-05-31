@@ -1,6 +1,6 @@
 [package]
 name = "fluence"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Fluence Labs"]
 publish=false
 edition = "2018"

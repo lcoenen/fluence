@@ -28,5 +28,5 @@ Then look at `build` directory
 
 Address of Fluence contract can be configured in
 - dashboard/src/constants.ts, see defaultContractAddress constant
-- `data-contract` attribute of dashboard index.html body tag for example: `<body class="hold-transition skin-blue skin-fluence" id="root" data-contract="0xeFF91455de6D4CF57C141bD8bF819E5f873c1A01">`
-- passed in querystring, `<dashboard url>/?contract=0xeFF91455de6D4CF57C141bD8bF819E5f873c1A01`
+- `data-contract` attribute of dashboard index.html body tag for example: `<body class="hold-transition skin-blue skin-fluence" id="root" data-contract="0xfb405cf664369d1f07668cb07649afbcd37af823">`
+- passed in querystring, `<dashboard url>/?contract=0xfb405cf664369d1f07668cb07649afbcd37af823`
