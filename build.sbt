@@ -370,28 +370,46 @@ lazy val `kademlia` = crossProject(JVMPlatform, JSPlatform)
       "com.github.alexarchambault" %%% "scalacheck-shapeless_1.13" % "1.1.8" % Test
     )
   )
-  .jsSettings(
-    test in Test := {}
-  )
   .dependsOn(`kvstore`, `log`)
   .enablePlugins(AutomateHeaderPlugin)
 
 lazy val `kademlia-js` = `kademlia`.js.enablePlugins(ScalaJSBundlerPlugin)
 lazy val `kademlia-jvm` = `kademlia`.jvm
 
-lazy val `kademlia-http` = (project in file("kademlia/http"))
+lazy val `kademlia-http` = crossProject(JVMPlatform, JSPlatform)
+  .withoutSuffixFor(JVMPlatform)
+  .crossType(FluenceCrossType)
+  .in(file("kademlia/http"))
   .settings(
     commons,
     kindProjector,
     libraryDependencies ++= Seq(
-      sttp,
-      circeGeneric,
-      circeParser,
-      http4sDsl,
-      scalaTest
+      "io.circe" %%% "circe-generic" % circeVersion,
+      "io.circe" %%% "circe-parser" % circeVersion,
+      "io.circe" %%% "circe-core" % circeVersion,
+      "one.fluence" %%% "crypto-hashsign" % cryptoVersion,
+      "io.circe" %%% "circe-generic-extras" % circeVersion,
+      "org.scalatest" %%% "scalatest" % scalaTestVersion % Test
     )
-  ).dependsOn(`kademlia-jvm`, `kademlia-testkit` % Test)
+  )
+  .jsSettings(
+
+    //all JavaScript dependencies will be concatenated to a single file *-jsdeps.js
+    skip in packageJSDependencies := false,
+    fork in Test                  := false,
+    scalaJSModuleKind             := ModuleKind.CommonJSModule
+  )
+  .jvmSettings(
+    libraryDependencies ++= Seq(
+      sttp,
+      http4sDsl
+    )
+  ).dependsOn(`kademlia`)
   .enablePlugins(AutomateHeaderPlugin)
+
+lazy val `kademlia-http-js` = `kademlia-http`.js
+lazy val `kademlia-http-jvm` = `kademlia-http`.jvm
+  .dependsOn(`kademlia-testkit` % Test)
 
 lazy val `kademlia-testkit` = (project in file("kademlia/testkit"))
   .settings(
@@ -413,7 +431,7 @@ lazy val `log` = crossProject(JVMPlatform, JSPlatform)
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core" % catsVersion,
       "org.typelevel" %%% "cats-effect" % catsEffectVersion,
-      "org.scalatest" %%% "scalatest" % "3.0.5"  % Test
+      "org.scalatest" %%% "scalatest" % scalaTestVersion  % Test
     )
   )
   .enablePlugins(AutomateHeaderPlugin)
@@ -468,6 +486,6 @@ lazy val `node` = project
     `dockerio`, 
     `tendermint-rpc`, 
     `sttpEitherT`, 
-    `kademlia-http`,
+    `kademlia-http-jvm`,
     `kademlia-testkit` % Test
   )

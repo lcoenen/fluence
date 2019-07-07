@@ -22,11 +22,11 @@ import cats.syntax.either._
 import cats.syntax.functor._
 import com.softwaremill.sttp._
 import fluence.crypto.Crypto
-import fluence.kad.{KadRemoteError, KadRpcError}
 import fluence.kad.protocol.{KademliaRpc, Key, Node}
+import fluence.kad.{KadRemoteError, KadRpcError}
 import fluence.log.Log
-import io.circe.{Decoder, DecodingFailure}
 import io.circe.parser._
+import io.circe.{Decoder, DecodingFailure}
 
 import scala.language.higherKinds
 

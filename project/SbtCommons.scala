@@ -154,7 +154,8 @@ object SbtCommons {
   val scalacheckShapeless = "com.github.alexarchambault" %% "scalacheck-shapeless_1.13" % "1.1.8" % Test
   val catsTestkit = "org.typelevel" %% "cats-testkit" % catsVersion % Test
 
-  val scalaTest = "org.scalatest" %% "scalatest" % "3.0.5" % Test
-  val scalaIntegrationTest = "org.scalatest" %% "scalatest" % "3.0.5" % IntegrationTest
+  val scalaTestVersion = "3.0.5"
+  val scalaTest = "org.scalatest" %% "scalatest" % scalaTestVersion % Test
+  val scalaIntegrationTest = "org.scalatest" %% "scalatest" % scalaTestVersion % IntegrationTest
   val mockito = "org.mockito" % "mockito-core" % "2.21.0" % Test
 }
