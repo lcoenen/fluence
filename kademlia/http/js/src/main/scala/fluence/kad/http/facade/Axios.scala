@@ -20,7 +20,7 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSGlobal, JSImport}
 
 @js.native
-@JSImport("axios", "Axios")
+@JSImport("axios", JSImport.Namespace)
 object Axios extends js.Object {
   var defaults: js.Any = js.native
 

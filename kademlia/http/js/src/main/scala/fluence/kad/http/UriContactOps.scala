@@ -16,9 +16,14 @@
 
 package fluence.kad.http
 
+import cats.Id
 import fluence.codec.{CodecError, PureCodec}
 import fluence.codec.PureCodec.liftFuncEither
+import fluence.crypto.eddsa.Ed25519
+import cats.implicits._
 import fluence.kad.http.UriContact.{~~>, pkWithSignatureCodec}
+
+import scala.util.Try
 
 object UriContactOps {
 
@@ -48,7 +53,18 @@ object UriContactOps {
           case _ ⇒ Left(CodecError("Host and port must be presented"))
         }
       }
-    } yield UriContact(host, port.toShort, pkWithSignatureCodec.direct.unsafe(pks))
+    } yield {
+      println("host: " + host)
+      println("port: " + port)
+      println("pks: " + pks)
+      val pk = pkWithSignatureCodec.direct.runEither[Id](pks)
+      val pkk = pk.right.get
+      val msg = UriContact(host, port.toShort, pkWithSignatureCodec.direct.unsafe(pks))
+      val result = Ed25519.ed25519.verify[Try](pkk.publicKey, pkk.signature, msg.msg)
+      println("result: " + result)
+      println("msg: " + msg.toString)
+      msg
+    }
 
     b
   }

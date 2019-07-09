@@ -136,7 +136,7 @@ object UriContact {
     }
 
   // to remove PureCodec.liftFuncEither boilerplate whereas possible
-  private implicit def liftEitherF[A, B](fn: A ⇒ Either[CodecError, B]): A ~~> B =
+  implicit def liftEitherF[A, B](fn: A ⇒ Either[CodecError, B]): A ~~> B =
     PureCodec.liftFuncEither(fn)
 
   /**
