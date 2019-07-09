@@ -46,10 +46,10 @@ class KademliaHttpClient(hostname: String, port: Short, auth: String) extends Ka
    */
   override def ping()(implicit log: Log[IO]): EitherT[IO, KadRpcError, Node[UriContact]] = {
     val a: EitherT[IO, Throwable, Node[UriContact]] = for {
-      resp <- EitherT(IO.fromFuture(IO(Axios.post(s"http://$hostname:$port/kad/ping").toFuture)).attempt)
+      resp <- EitherT(IO.fromFuture(IO(Axios.get(s"http://$hostname:$port/kad/ping").toFuture)).attempt)
       b <- EitherT.fromEither[IO](decodeJs[Node[UriContact]](resp.data))
     } yield b
-    a.leftMap(t => KadRemoteError("", t))
+    a.leftMap(t => KadRemoteError("Error on ping", t))
   }
 
   /**
@@ -62,12 +62,12 @@ class KademliaHttpClient(hostname: String, port: Short, auth: String) extends Ka
   ): EitherT[IO, KadRpcError, Seq[Node[UriContact]]] = {
     val a = for {
       resp <- EitherT(
-        IO.fromFuture(IO(Axios.post(s"http://$hostname:$port/kad/lookup?key=${key.asBase58}&n=$neighbors").toFuture))
+        IO.fromFuture(IO(Axios.get(s"http://$hostname:$port/kad/lookup?key=${key.asBase58}&n=$neighbors").toFuture))
           .attempt
       )
       b <- EitherT.fromEither[IO](decodeJs[Seq[Node[UriContact]]](resp.data))
     } yield b
-    a.leftMap(t => KadRemoteError("", t))
+    a.leftMap(t => KadRemoteError("Error on lookup", t))
   }
 
   /**
@@ -83,7 +83,7 @@ class KademliaHttpClient(hostname: String, port: Short, auth: String) extends Ka
         IO.fromFuture(
             IO(
               Axios
-                .post(
+                .get(
                   s"http://$hostname:$port/kad/lookup?key=${key.asBase58}&n=$neighbors&awayFrom=${moveAwayFrom.asBase58}"
                 )
                 .toFuture
@@ -93,6 +93,6 @@ class KademliaHttpClient(hostname: String, port: Short, auth: String) extends Ka
       )
       b <- EitherT.fromEither[IO](decodeJs[Seq[Node[UriContact]]](resp.data))
     } yield b
-    a.leftMap(t => KadRemoteError("", t))
+    a.leftMap(t => KadRemoteError("Error on lookupAway", t))
   }
 }

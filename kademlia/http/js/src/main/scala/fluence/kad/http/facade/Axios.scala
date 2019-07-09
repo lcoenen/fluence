@@ -17,10 +17,10 @@
 package fluence.kad.http.facade
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSGlobal
+import scala.scalajs.js.annotation.{JSGlobal, JSImport}
 
 @js.native
-@JSGlobal
+@JSImport("axios", "Axios")
 object Axios extends js.Object {
   var defaults: js.Any = js.native
 

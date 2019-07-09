@@ -17,6 +17,7 @@
 package fluence.kad.http
 
 import cats.effect.{ContextShift, IO, Timer}
+import fluence.kad.http.facade.Axios
 import fluence.log.{Log, LogFactory}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -25,12 +26,14 @@ object KademliaTest {
 
   def main(args: Array[String]): Unit = {
 
-    implicit val ioTimer: Timer[IO] = IO.timer(global)
+    /*implicit val ioTimer: Timer[IO] = IO.timer(global)
     implicit val ioShift: ContextShift[IO] = IO.contextShift(global)
 
     implicit val log: Log[IO] = LogFactory.forPrintln[IO]().init("kad", "example").unsafeRunSync()
 
     val k = new KademliaHttpClient("localhost", 1234, "")
-    println(k.ping().value)
+    println(k.ping().value)*/
+
+    println(Axios.post)
   }
 }

@@ -28,4 +28,6 @@ sealed trait KadRpcError extends KadError
 
 case class KadRemoteError(msg: String, cause: Throwable) extends KadRpcError {
   initCause(cause)
+
+  override def toString: String = s"KadRemoteError: msg: $msg, cause: ${cause.getLocalizedMessage}"
 }

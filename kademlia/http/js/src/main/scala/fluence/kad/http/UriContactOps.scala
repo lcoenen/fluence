@@ -30,7 +30,7 @@ object UriContactOps {
 
     val b = for {
       (key, hostPort) <- {
-        if (arr.size == 2) {
+        if (arr.size != 2) {
           Left(CodecError("User info must be provided"))
         } else {
           Right((arr(0), arr(1)))

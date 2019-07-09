@@ -393,11 +393,18 @@ lazy val `kademlia-http` = crossProject(JVMPlatform, JSPlatform)
     )
   )
   .jsSettings(
-
-    //all JavaScript dependencies will be concatenated to a single file *-jsdeps.js
+    libraryDependencies ++= Seq(
+      "io.scalajs" %%% "nodejs" % "0.4.2"
+    ),
+    npmDependencies in Compile ++= Seq(
+      "axios" -> "0.19.0"
+    ),
+    webpackConfigFile := Some(baseDirectory.value / "kademlia-http.webpack.config.js"),
+    scalaJSModuleKind := ModuleKind.CommonJSModule,
+    scalaJSUseMainModuleInitializer := true,
     skip in packageJSDependencies := false,
     fork in Test                  := false,
-    scalaJSModuleKind             := ModuleKind.CommonJSModule
+    webpackBundlingMode := BundlingMode.LibraryOnly("kademlia-http")
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
@@ -407,7 +414,7 @@ lazy val `kademlia-http` = crossProject(JVMPlatform, JSPlatform)
   ).dependsOn(`kademlia`)
   .enablePlugins(AutomateHeaderPlugin)
 
-lazy val `kademlia-http-js` = `kademlia-http`.js
+lazy val `kademlia-http-js` = `kademlia-http`.js.enablePlugins(ScalaJSBundlerPlugin)
 lazy val `kademlia-http-jvm` = `kademlia-http`.jvm
   .dependsOn(`kademlia-testkit` % Test)
 
