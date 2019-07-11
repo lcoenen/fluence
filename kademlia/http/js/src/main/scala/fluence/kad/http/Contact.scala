@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package fluence.kad
+package fluence.kad.http
 
-import scala.util.control.NoStackTrace
+import scala.annotation.meta.field
+import scala.scalajs.js.annotation.JSExport
 
-sealed trait KadError extends NoStackTrace
+@JSExport
+case class Node(@(JSExport @field) key: String, @(JSExport @field) contact: Contact)
 
-sealed trait JoinError extends KadError
+@JSExport
+case class Contact(@(JSExport @field) host: String,
+                   @(JSExport @field) port: String,
+                   @(JSExport @field) signature: Signature)
 
-case object CantJoinAnyNode extends JoinError
-
-sealed trait KadRpcError extends KadError
-
-case class KadRemoteError(msg: String, cause: Throwable) extends KadRpcError {
-  initCause(cause)
-
-  override def toString: String = {
-    cause.printStackTrace()
-    s"KadRemoteError: msg: $msg, cause: ${cause.getLocalizedMessage}"
-  }
-}
+@JSExport
+case class Signature(@(JSExport @field) publicKey: String, @(JSExport @field) signature: String)

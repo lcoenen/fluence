@@ -406,9 +406,6 @@ lazy val `kademlia-http` = crossProject(JVMPlatform, JSPlatform)
     )
   )
   .jsSettings(
-    libraryDependencies ++= Seq(
-      "io.scalajs" %%% "nodejs" % "0.4.2"
-    ),
     npmDependencies in Compile ++= Seq(
       "axios" -> "0.19.0"
     ),

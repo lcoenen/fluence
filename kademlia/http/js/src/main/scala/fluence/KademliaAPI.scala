@@ -22,7 +22,7 @@ import fluence.crypto.KeyPair
 import fluence.crypto.eddsa.Ed25519
 import fluence.crypto.signature.{PubKeyAndSignature, Signature}
 import fluence.kad.{Kademlia, KademliaImpl, RoutingConf}
-import fluence.kad.http.{KademliaHttpClient, UriContact, UriContactOps}
+import fluence.kad.http.{Contact, KademliaHttpClient, UriContact, UriContactOps}
 import fluence.kad.protocol.{ContactAccess, Key, Node}
 import fluence.kad.routing.RoutingTable
 import fluence.log.Log.Aux
@@ -47,6 +47,31 @@ class KademliaAPI(kademlia: Kademlia[IO, UriContact])(implicit log: Log[IO]) {
       log ⇒
         kademlia
           .join(peers.toArray.toSeq.map(p => UriContactOps.readContact.unsafe(p)), numberOfNodes)(log)
+          .unsafeToFuture()
+          .toJSPromise
+    )
+  }
+
+  @JSExport
+  def findNode(key: String, maxRequests: Int): js.Promise[kad.http.Node] = {
+    val keyK = Key(ByteVector.fromValidBase58(key))
+    Log[IO].scope("kad" -> "join")(
+      log ⇒
+        kademlia
+          .findNode(keyK, maxRequests)(log)
+          .map(n => {
+            n.map(
+                c =>
+                  kad.http.Node(
+                    key,
+                    Contact(c.contact.host,
+                            c.contact.port.toString,
+                            kad.http.Signature(c.contact.signature.publicKey.value.toHex,
+                                               c.contact.signature.signature.sign.toHex))
+                )
+              )
+              .orNull
+          })
           .unsafeToFuture()
           .toJSPromise
     )
