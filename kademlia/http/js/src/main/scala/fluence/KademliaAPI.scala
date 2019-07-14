@@ -53,7 +53,7 @@ class KademliaAPI(kademlia: Kademlia[IO, UriContact])(implicit log: Log[IO]) {
   }
 
   @JSExport
-  def findNode(key: String, maxRequests: Int): js.Promise[kad.http.Node] = {
+  def findNode(key: String, maxRequests: Int): js.Promise[kad.http.NodeJS] = {
     val keyK = Key(ByteVector.fromValidBase58(key))
     Log[IO].scope("kad" -> "join")(
       log ⇒
@@ -62,7 +62,7 @@ class KademliaAPI(kademlia: Kademlia[IO, UriContact])(implicit log: Log[IO]) {
           .map(n => {
             n.map(
                 c =>
-                  kad.http.Node(
+                  kad.http.NodeJS(
                     key,
                     Contact(c.contact.host,
                             c.contact.port.toString,

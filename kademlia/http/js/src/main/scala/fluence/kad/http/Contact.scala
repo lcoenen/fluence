@@ -20,7 +20,7 @@ import scala.annotation.meta.field
 import scala.scalajs.js.annotation.JSExport
 
 @JSExport
-case class Node(@(JSExport @field) key: String, @(JSExport @field) contact: Contact)
+case class NodeJS(@(JSExport @field) key: String, @(JSExport @field) contact: Contact)
 
 @JSExport
 case class Contact(@(JSExport @field) host: String,
