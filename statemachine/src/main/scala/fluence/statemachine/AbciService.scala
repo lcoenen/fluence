@@ -16,6 +16,7 @@
 
 package fluence.statemachine
 
+import cats.data.State
 import cats.effect.Sync
 import cats.effect.concurrent.Ref
 import cats.syntax.flatMap._
@@ -40,7 +41,7 @@ import scala.language.higherKinds
  * @param controlSignals Communication channel with master node
  */
 class AbciService[F[_]: Monad](
-  state: Ref[F, AbciState],
+  state: Ref[F, AbciState[F]],
   vm: VmOperationInvoker[F],
   controlSignals: ControlSignals[F]
 )(implicit hasher: Hasher[ByteVector, ByteVector]) {
@@ -60,7 +61,7 @@ class AbciService[F[_]: Monad](
       sTxs ← AbciState.formBlock[F].run(s)
 
       // Process txs one by one
-      st ← Monad[F].tailRecM[(AbciState, List[Tx]), AbciState](sTxs) {
+      st ← Monad[F].tailRecM[(AbciState[F], List[Tx]), AbciState[F]](sTxs) {
         case (st, tx :: txs) ⇒
           // Invoke
           vm.invoke(tx.data.value)
@@ -147,7 +148,7 @@ class AbciService[F[_]: Monad](
         // TODO we have different logic in checkTx and deliverTx, as only in deliverTx tx might be dropped due to pending txs overflow
         state
         // Update the state with a new tx
-          .modifyState(AbciState.addTx(tx))
+          .modifyState(AbciState.addTx(tx): State[AbciState[F], Boolean])
           .map {
             case true ⇒ TxResponse(CodeType.OK, s"Delivered\n${tx.head}")
             case false ⇒ TxResponse(CodeType.BadNonce, s"Dropped\n${tx.head}")
@@ -228,7 +229,7 @@ object AbciService {
     import scala.language.higherKinds
 
     for {
-      state ← Ref.of[F, AbciState](AbciState())
+      state ← Ref.of[F, AbciState[F]](AbciState[F]())
     } yield {
 
       val bva = Crypto.liftFunc[ByteVector, Array[Byte]](_.toArray)
