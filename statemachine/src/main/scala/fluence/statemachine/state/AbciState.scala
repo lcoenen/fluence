@@ -42,7 +42,7 @@ case class AbciState[F[_]](
   blockSessions: Set[String] = Set.empty,
   responses: Queue[(Tx.Head, Array[Byte])] = Queue.empty,
   sessions: Sessions = Sessions(),
-  requestSubscribtions: Map[Head, Deferred[F, QueryResponse]] = Map.empty
+  requestSubscribtions: Map[Head, Deferred[F, QueryResponse]] = Map.empty[Head, Deferred[F, QueryResponse]]
 )
 
 object AbciState {

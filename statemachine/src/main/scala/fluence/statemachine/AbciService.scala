@@ -16,7 +16,6 @@
 
 package fluence.statemachine
 
-import cats.data.State
 import cats.effect.Sync
 import cats.effect.concurrent.Ref
 import cats.syntax.flatMap._
@@ -146,13 +145,18 @@ class AbciService[F[_]: Monad](
     Tx.readTx(data).value.flatMap {
       case Some(tx) ⇒
         // TODO we have different logic in checkTx and deliverTx, as only in deliverTx tx might be dropped due to pending txs overflow
-        state
-        // Update the state with a new tx
-          .modifyState(AbciState.addTx(tx): State[AbciState[F], Boolean])
-          .map {
-            case true ⇒ TxResponse(CodeType.OK, s"Delivered\n${tx.head}")
-            case false ⇒ TxResponse(CodeType.BadNonce, s"Dropped\n${tx.head}")
+        for {
+          st <- state.get
+          // Update the state with a new tx
+          (newState, added) <- AbciState.addTx(tx).run(st)
+          _ <- state.set(newState)
+        } yield {
+          if (added) {
+            TxResponse(CodeType.OK, s"Delivered\n${tx.head}")
+          } else {
+            TxResponse(CodeType.BadNonce, s"Dropped\n${tx.head}")
           }
+        }
       case None ⇒
         Applicative[F].pure(TxResponse(CodeType.BAD, s"Cannot parse transaction header"))
     }

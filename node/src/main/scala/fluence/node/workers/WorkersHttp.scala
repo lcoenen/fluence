@@ -42,7 +42,7 @@ object WorkersHttp {
     object QueryData extends OptionalQueryParamDecoderMatcher[String]("data")
     object QueryId extends OptionalQueryParamDecoderMatcher[String]("id")
 
-    /** Helper: runs a function iff a worker is in a pool, unwraps EitherT into different response types, renders errors */
+    /** Helper: runs a function if a worker is in a pool, unwraps EitherT into different response types, renders errors */
     def withTendermint(
       appId: Long
     )(fn: TendermintRpc[F] ⇒ EitherT[F, RpcError, String])(implicit log: Log[F]): F[Response[F]] =
