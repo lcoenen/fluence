@@ -2,6 +2,7 @@ import {WorkerSession} from "./fluence";
 import {ResultPromise} from "./ResultAwait";
 import {PrivateKey} from "./utils";
 import {getWorkerStatus} from "fluence-monitoring"
+import {RequestStatus} from "./Session";
 
 // All sessions with workers from an app
 export class AppSession {
@@ -26,11 +27,42 @@ export class AppSession {
         this.privateKey = privateKey;
     }
 
+    private getNextWorkerSession(): WorkerSession {
+        let workerSession;
+        let counter = 0;
+        do {
+            if (counter++ >= this.workerSessions.length) {
+                throw new Error('All sessions was banned, no free connection to use.');
+            }
+
+            const nextWorker = this.workerCounter++ % this.workerSessions.length;
+            workerSession = this.workerSessions[nextWorker];
+        } while(workerSession.session.isBanned());
+
+        return workerSession;
+    }
+
     // selects next worker and calls `request` on that worker
-    request(payload: string): ResultPromise {
-        let nextWorker = this.workerCounter++ % this.workerSessions.length;
-        let session = this.workerSessions[nextWorker].session;
-        return session.request(payload, this.privateKey, this.counter++);
+    async request(payload: string): Promise<ResultPromise> {
+        const currentCounter = this.counter++;
+        const performRequest = async (retryCount: number = 0): Promise<ResultPromise> => {
+            const { session } = this.getNextWorkerSession();
+
+            const { status, result, error } = await session.request(payload, this.privateKey, currentCounter);
+
+            if (status !== RequestStatus.OK) {
+                if (status === RequestStatus.E_REQUEST && retryCount < this.workerSessions.length) {
+                    session.ban();
+                    return performRequest(retryCount + 1);
+                }
+
+                throw error;
+            }
+
+            return result as ResultPromise;
+        };
+
+        return performRequest();
     }
 
     // gets info about all workers in the cluster
