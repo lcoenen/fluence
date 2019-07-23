@@ -40,8 +40,8 @@ import scala.language.higherKinds
 class ControlSignalsImpl[F[_]: Monad: Log](
   private val dropPeersRef: MVar[F, Set[DropPeer]],
   private val stopRef: Deferred[F, Unit],
-  private val receiptQueue: fs2.concurrent.Queue[F, BlockReceipt],
-  private val hashQueue: fs2.concurrent.Queue[F, VmHash]
+  private val receipts: DeferredMap[F, Long, BlockReceipt],
+  private val vmHashes: DeferredMap[F, Long, VmHash]
 ) extends ControlSignals[F] {
 
   private def traceBU(msg: String) = Log[F].trace(Console.YELLOW + "BUD: " + msg + Console.RESET)
@@ -82,7 +82,7 @@ class ControlSignalsImpl[F[_]: Monad: Log](
    * @param receipt Receipt to store
    */
   def enqueueReceipt(receipt: BlockReceipt): F[Unit] =
-    traceBU(s"enqueueReceipt ${receipt.receipt.height} ${receipt.`type`}") *> receiptQueue.enqueue1(receipt)
+    traceBU(s"enqueueReceipt ${receipt.receipt.height} ${receipt.`type`}") *> receipts.put(receipt)
 
   /**
    * Retrieves block receipt, async blocks until there's a receipt
@@ -90,7 +90,7 @@ class ControlSignalsImpl[F[_]: Monad: Log](
   def getReceipt(height: Long): F[BlockReceipt] =
     // TODO: this doesn't work with backoff.retry because element is dequeued
     // TODO: so maybe use Map
-    traceBU(s"getReceipt $height") *> dequeueByHeight(receiptQueue, height)
+    traceBU(s"getReceipt $height") *> receipts.get(height)
 
   /**
    * Adds vm hash to queue, so node can retrieve it for block manifest uploading
@@ -98,14 +98,14 @@ class ControlSignalsImpl[F[_]: Monad: Log](
   override def enqueueVmHash(height: Long, hash: ByteVector): F[Unit] =
     // TODO: this doesn't work with backoff.retry because element is dequeued
     // TODO: so maybe use Map
-    traceBU(s"enqueueVmHash $height") *> hashQueue.enqueue1(VmHash(height, hash))
+    traceBU(s"enqueueVmHash $height") *> vmHashes.put(VmHash(height, hash))
 
   /**
    * Retrieves a single vm hash from queue. Called by node on block manifest uploading
    */
   override def getVmHash(height: Long): F[VmHash] =
     // Filter here because after blocks replay (on restart) there would be extraneous vm hashes for empty blocks
-    traceBU(s"getVmHash $height") *> dequeueByHeight(hashQueue, height)
+    traceBU(s"getVmHash $height") *> vmHashes.get(height)
 
   private def dequeueByHeight[A: HasHeight](queue: fs2.concurrent.Queue[F, A], height: Long): F[A] =
     FlatMap[F].tailRecM(queue) { q =>
