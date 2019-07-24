@@ -17,14 +17,15 @@
 package fluence.statemachine.control
 
 import cats.effect.Concurrent
-import cats.{Applicative, CommutativeApplicative, Monad, Parallel, Traverse, UnorderedTraverse}
-import cats.effect.concurrent.{Deferred, Ref}
+import cats.{Applicative, CommutativeApplicative, Monad, Order, Parallel, Traverse, UnorderedTraverse}
+import cats.effect.concurrent.{Deferred, Ref, Semaphore}
 import cats.syntax.functor._
 import cats.instances.list._
 import cats.syntax.flatMap._
 
 import scala.language.higherKinds
 import scala.collection.immutable
+import scala.collection.immutable.TreeMap
 
 class DeferredMap[F[_]: Concurrent, K, A: HasKey[?, K]](
   ref: Ref[F, immutable.Map[K, Deferred[F, Option[A]]]]
@@ -56,8 +57,8 @@ class DeferredMap[F[_]: Concurrent, K, A: HasKey[?, K]](
     }
   }
 
-  private def ifF[T](cond: Boolean)(thunk: => F[T]) =
-    if (cond) thunk.map(_ => ())
+  private def ifF(cond: Boolean)(thunk: => F[_]) =
+    if (cond) thunk.void
     else F.unit
 }
 
@@ -66,7 +67,7 @@ trait HasKey[A, K] {
 }
 
 object HasKey {
-
+val o: Order[Any] = _
   object syntax {
     implicit class HasKeyOps[K, A](a: A)(implicit HK: HasKey[A, K]) {
       def key = HK.key(a)
@@ -78,4 +79,20 @@ object HasKey {
   implicit def hasHeight[A: HasHeight] = new HasKey[A, Long] {
     override def key(a: A): Long = HasHeight[A].height(a)
   }
+}
+
+class SomeMap[F[_], K: Order, V](
+  askSlot: Semaphore[F],
+  map: Ref[F, TreeMap[K, V]]
+                                ){
+  // k >= min current key
+  // there should be no more asks
+  // once returned, all k < this are removed
+  // otherwise should be idempotent
+  def ask(k: K): F[V] = ???
+
+  // k > max current key,
+  // if there's pending ask, k <= min ask k
+  // idempotent -- can put the same value twice
+  def put(k: K, v: V): F[Unit] = ???
 }

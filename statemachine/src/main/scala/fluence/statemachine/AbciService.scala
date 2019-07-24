@@ -92,14 +92,14 @@ class AbciService[F[_]: Monad: Effect](
         .leftSemiflatMap(err ⇒ Log[F].error(s"VM is unable to compute state hash: $err").as(err))
         .getOrElse(ByteVector.empty) // TODO do not ignore vm error
 
-      _ <- traceBU(s"got vmHash; height ${st.height + 1}" + Console.RESET)
+      _ <- traceBU(s"got vmHash; height ${st.height + 1}" )
 
       // Do not wait for receipt on empty blocks
       receipt <- if (transactions.nonEmpty) {
-        traceBU(s"retrieving receipt on height $blockHeight" + Console.RESET) *>
+        traceBU(s"retrieving receipt on height $blockHeight") *>
           controlSignals.getReceipt(blockHeight - 1).map(_.some)
       } else {
-        traceBU(s"WON'T retrieve receipt on height $blockHeight" + Console.RESET) *>
+        traceBU(s"WON'T retrieve receipt on height $blockHeight") *>
           none[BlockReceipt].pure[F]
       }
 
@@ -126,7 +126,7 @@ class AbciService[F[_]: Monad: Effect](
           currentState.appHash.pure[F]
       } {
         case BlockReceipt(r, _) =>
-          traceBU(s"appHash = hash(${vmHash.toHex} ++ ${r.jsonBytes().toHex})" + Console.RESET) *>
+          traceBU(s"appHash = hash(${vmHash.toHex} ++ ${r.jsonBytes().toHex})") *>
             hasher[F](vmHash ++ r.jsonBytes())
               .leftMap(err => log.error(s"Error on hashing vmHash + receipt: $err"))
               .getOrElse(vmHash) // TODO: don't ignore errors
@@ -138,11 +138,11 @@ class AbciService[F[_]: Monad: Effect](
       // Store updated state in the Ref (the changes were transient for readers before this step)
       _ ← state.set(newState)
 
-      _ <- traceBU("state.set done" + Console.RESET)
+      _ <- traceBU("state.set done" )
 
       // Store vmHash, so master node could retrieve it
       _ <- controlSignals.enqueueVmHash(blockHeight, vmHash)
-      _ <- traceBU(s"end of commit $blockHeight" + Console.RESET)
+      _ <- traceBU(s"end of commit $blockHeight")
     } yield appHash
 
   /**
