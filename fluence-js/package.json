@@ -1,9 +1,9 @@
 {
-  "name": "fluence",
+  "name": "@lcoenen/fluence",
   "namespace": "fluence",
   "version": "0.2.0",
   "description": "Fluence Javascript Client allows you to interact with a Fluence real-time cluster for decentralized computations.",
-  "main": "./dist/fluence.js",
+  "main": "./bundle/bundle.js",
   "typings": "./dist/fluence.d.ts",
   "scripts": {
     "test": "mocha -r ts-node/register src/**/*.spec.ts",
@@ -52,6 +52,7 @@
     "@types/secp256k1": "3.5.0",
     "@types/sha256": "0.2.0",
     "awesome-typescript-loader": "5.2.1",
+    "babel-cli": "^6.26.0",
     "chai": "4.2.0",
     "clean-webpack-plugin": "0.1.19",
     "html-webpack-plugin": "3.2.0",
