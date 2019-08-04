@@ -9,7 +9,8 @@
     "test": "mocha -r ts-node/register src/**/*.spec.ts",
     "build": "webpack",
     "package:build": "tsc",
-    "prepare": "tsc",
+    "transpile": "node_modules/.bin/babel dist --out-dir dist",
+    "prepare": "npm run package:build && npm run transpile",
     "start:dev": "webpack-dev-server"
   },
   "repository": {
@@ -42,6 +43,9 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
+    "@babel/cli": "^7.5.5",
+    "@babel/core": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
     "@types/base64-js": "1.2.5",
     "@types/chai": "4.1.7",
     "@types/debug": "0.0.30",
